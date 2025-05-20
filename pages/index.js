@@ -6,23 +6,57 @@ const Command = {
   CLEAR: "clear",
 };
 
-export default function Home() {
-  const [history, setHistory] = useState([
-    "Starting...",
-    "Type help for commands",
-  ]);
-  const [input, setInput] = useState("");
-  const [caretVisible, setCaretVisible] = useState(true);
+const BOOT_LINES = ["Starting...", "Type help for commands"];
 
+export default function Home() {
+  // States
+  const [history, setHistory] = useState([]);
+  const [input, setInput] = useState("");
+  const [booting, setBooting] = useState(true);
+
+  // Refs
   const inputRef = useRef(null);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCaretVisible((v) => !v);
-    }, 500);
-    return () => clearInterval(interval);
+    let lineIndex = 0;
+    let charIndex = 0;
+    let currentLine = "";
+
+    const typeNextChar = () => {
+      if (lineIndex >= BOOT_LINES.length) {
+        setBooting(false);
+        return;
+      }
+
+      currentLine += BOOT_LINES[lineIndex][charIndex];
+      setHistory((prev) => {
+        const updated = [...prev];
+
+        // If the line is already in the history, update it, else add it
+        if (lineIndex < updated.length) {
+          updated[lineIndex] = currentLine;
+        } else {
+          updated.push(currentLine);
+        }
+
+        return updated;
+      });
+      charIndex++;
+
+      if (charIndex <= BOOT_LINES[lineIndex].length) {
+        setTimeout(typeNextChar, 50);
+      } else {
+        lineIndex++;
+        charIndex = 0;
+        currentLine = "";
+        setTimeout(typeNextChar, 1000);
+      }
+    };
+
+    typeNextChar();
   }, []);
 
+  // Handling typing commands
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       const cmd = input.trim();
@@ -30,7 +64,7 @@ export default function Home() {
 
       switch (cmd) {
         case Command.HELP:
-          output = "Available commands: help, about, clear";
+          output = `Available commands: ${Object.values(Command).join(", ")}`;
           break;
         case Command.ABOUT:
           output = "This is a terminal-style website built with Next.js!";
@@ -66,18 +100,20 @@ export default function Home() {
         {history.map((line, i) => (
           <div key={i}>{line}</div>
         ))}
-        <div className="flex items-start">
-          <span>$&nbsp;</span>
-          <div
-            ref={inputRef}
-            tabIndex={0}
-            onKeyDown={handleKeyDown}
-            className="outline-none whitespace-pre"
-          >
-            {input}
-            {caretVisible && <span className="animate-blink">█</span>}
+        {!booting && (
+          <div className="flex items-start">
+            <span>$&nbsp;</span>
+            <div
+              ref={inputRef}
+              tabIndex={0}
+              onKeyDown={handleKeyDown}
+              className="outline-none whitespace-pre"
+            >
+              {input}
+              <span className="animate-pulse">█</span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
