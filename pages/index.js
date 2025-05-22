@@ -1,12 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 
-const Command = {
-  HELP: "help",
+const COMMANDS = {
   ABOUT: "about",
+  AUTHOR: "author",
   CLEAR: "clear",
+  HELP: "help",
 };
 
-const BOOT_LINES = ["Starting...", "Type help for commands"];
+const TYPES = {
+  TEXT: "text",
+  LINK: "link",
+  COMMAND: "command",
+};
+
+const BOOT_LINES = ["Starting...", "Welcome!", "Type help for commands"];
 
 export default function Home() {
   // States
@@ -34,9 +41,15 @@ export default function Home() {
 
         // If the line is already in the history, update it, else add it
         if (lineIndex < updated.length) {
-          updated[lineIndex] = currentLine;
+          updated[lineIndex] = {
+            type: TYPES.TEXT,
+            content: currentLine,
+          };
         } else {
-          updated.push(currentLine);
+          updated.push({
+            type: TYPES.TEXT,
+            content: currentLine,
+          });
         }
 
         return updated;
@@ -60,24 +73,45 @@ export default function Home() {
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       const cmd = input.trim();
-      let output = "";
+      let output = {};
 
       switch (cmd) {
-        case Command.HELP:
-          output = `Available commands: ${Object.values(Command).join(", ")}`;
+        case COMMANDS.ABOUT:
+          output = {
+            type: TYPES.TEXT,
+            content: "This is a terminal-style website built with Next.js!",
+          };
           break;
-        case Command.ABOUT:
-          output = "This is a terminal-style website built with Next.js!";
+        case COMMANDS.AUTHOR:
+          output = {
+            type: TYPES.LINK,
+            content: "Created by @Thean Yee Sin, check out my ",
+
+            href: "https://github.com/theanyeesin",
+            linkText: "Github",
+          };
           break;
-        case Command.CLEAR:
+        case COMMANDS.CLEAR:
           setHistory([]);
           setInput("");
           return;
+        case COMMANDS.HELP:
+          output = {
+            type: TYPES.TEXT,
+            content: `Available commands: ${Object.values(COMMANDS).join(
+              ", ",
+            )}`,
+          };
+          break;
         default:
-          output = `Command not found: ${cmd}`;
+          output = { type: TYPES.TEXT, content: `Command not found: ${cmd}` };
       }
 
-      setHistory((prev) => [...prev, `$ ${cmd}`, output]);
+      setHistory((prev) => [
+        ...prev,
+        { type: TYPES.COMMAND, content: `$ ${cmd}` },
+        output,
+      ]);
       setInput("");
     } else if (e.key === "Backspace") {
       setInput((prev) => prev.slice(0, -1));
@@ -97,9 +131,27 @@ export default function Home() {
       onClick={() => inputRef.current?.focus()}
     >
       <div className="w-full max-w-3xl px-4">
-        {history.map((line, i) => (
-          <div key={i}>{line}</div>
-        ))}
+        {history.map((item, i) => {
+          if (item.type === TYPES.TEXT || item.type === TYPES.COMMAND) {
+            return <div key={i}>{item.content}</div>;
+          }
+          if (item.type === TYPES.LINK) {
+            return (
+              <div key={i}>
+                {item.content}
+                <a
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-green-300"
+                >
+                  {item.linkText}
+                </a>
+              </div>
+            );
+          }
+          return null;
+        })}
         {!booting && (
           <div className="flex items-start">
             <span>$&nbsp;</span>
