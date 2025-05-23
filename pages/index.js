@@ -5,6 +5,7 @@ const COMMANDS = {
   AUTHOR: "author",
   CLEAR: "clear",
   HELP: "help",
+  WEBSITE: "website",
 };
 
 const TYPES = {
@@ -101,6 +102,14 @@ export default function Home() {
             content: `Available commands: ${Object.values(COMMANDS).join(
               ", ",
             )}`,
+          };
+          break;
+        case COMMANDS.WEBSITE:
+          output = {
+            type: TYPES.LINK,
+            content: "Check out my website: ",
+            href: "https://theanyeesin.com",
+            linkText: "theanyeesin.com",
           };
           break;
         default:
