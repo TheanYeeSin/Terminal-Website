@@ -7,6 +7,7 @@ const COMMANDS = {
   HELP: "help",
   WEBSITE: "website",
 };
+const COMMAND_LIST = Object.values(COMMANDS);
 
 const TYPES = {
   TEXT: "text",
@@ -99,9 +100,7 @@ export default function Home() {
         case COMMANDS.HELP:
           output = {
             type: TYPES.TEXT,
-            content: `Available commands: ${Object.values(COMMANDS).join(
-              ", ",
-            )}`,
+            content: `Available commands: ${COMMAND_LIST.join(", ")}`,
           };
           break;
         case COMMANDS.WEBSITE:
@@ -124,6 +123,29 @@ export default function Home() {
       setInput("");
     } else if (e.key === "Backspace") {
       setInput((prev) => prev.slice(0, -1));
+    } else if (e.key === "Tab") {
+      e.preventDefault();
+
+      const trimmedInput = input.trim();
+      if (trimmedInput.length === 0) return;
+
+      const matches = COMMAND_LIST.filter((cmd) =>
+        cmd.toLowerCase().startsWith(trimmedInput.toLowerCase()),
+      );
+
+      if (matches.length === 1) {
+        setInput(matches[0]);
+      } else if (matches.length > 1) {
+        const commonPrefix = matches[0].slice(0, trimmedInput.length);
+        setInput(commonPrefix);
+        setHistory((prev) => [
+          ...prev,
+          {
+            type: TYPES.TEXT,
+            content: `Available commands: ${matches.join(", ")}`,
+          },
+        ]);
+      }
     } else if (e.key.length === 1) {
       setInput((prev) => prev + e.key);
     }
